@@ -1,10 +1,10 @@
-import { decode } from 'he';
-import Node from './node';
-import NodeType from './type';
-import TextNode from './text';
-import Matcher from '../matcher';
-import arr_back from '../back';
-import CommentNode from './comment';
+import { decode } from 'https://raw.githubusercontent.com/mathiasbynens/he/master/src/he.js';
+import Node from './node.ts';
+import NodeType from './type.ts';
+import TextNode from './text.ts';
+import Matcher from '../matcher.ts';
+import arr_back from '../back.ts';
+import CommentNode from './comment.ts';
 
 export interface KeyAttributes {
 	id?: string;

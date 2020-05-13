@@ -1,5 +1,5 @@
-import Node from './node';
-import NodeType from './type';
+import Node from './node.ts';
+import NodeType from './type.ts';
 
 export default class CommentNode extends Node {
 	constructor(value: string) {

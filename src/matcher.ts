@@ -1,4 +1,4 @@
-import HTMLElement from './nodes/html';
+import HTMLElement from './nodes/html.ts';
 
 interface MatherFunction {
 	func(el: HTMLElement, tagName: string, classes: string[] | string, attr_key: string, value: string): boolean;

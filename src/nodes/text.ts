@@ -1,5 +1,5 @@
-import NodeType from './type';
-import Node from './node';
+import NodeType from './type.ts';
+import Node from './node.ts';
 
 /**
  * TextNode to contain a text element in DOM tree.
