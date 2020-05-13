@@ -17,7 +17,7 @@ let pMatchFunctionCache = {} as { [name: string]: MatherFunction };
 /**
  * Function cache
  */
-const functionCache = {
+const functionCache: { [key: string]: any } = {
 	f145(el: HTMLElement, tagName: string, classes: string[]) {
 		'use strict';
 		tagName = tagName || '';
@@ -164,7 +164,7 @@ export default class Matcher {
 			let attr_key = '';
 			let value = '';
 			if (tagName && tagName !== '*') {
-				let reg: RegExpMatchArray;
+				let reg: RegExpMatchArray | null;
 				if (tagName.startsWith('#')) {
 					// source += 'if (el.id != ' + JSON.stringify(tagName.substr(1)) + ') return false;';// 1
 					function_name += '1';

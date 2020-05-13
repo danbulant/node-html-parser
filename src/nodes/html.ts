@@ -1,4 +1,4 @@
-import { decode } from 'https://raw.githubusercontent.com/mathiasbynens/he/master/src/he.js';
+import { decode } from '../he.ts';
 import Node from './node.ts';
 import NodeType from './type.ts';
 import TextNode from './text.ts';
@@ -16,12 +16,12 @@ export interface Attributes {
 }
 
 export interface RawAttributes {
-	[key: string]: string;
+	[key: string]: string | null;
 }
 
 export type InsertPosition = 'beforebegin' | 'afterbegin' | 'beforeend' | 'afterend';
 
-const kBlockElements = {
+const kBlockElements: { [key: string]: boolean } = {
 	div: true,
 	p: true,
 	// ul: true,
@@ -44,9 +44,9 @@ const kBlockElements = {
  * @extends {Node}
  */
 export default class HTMLElement extends Node {
-	private _attrs: Attributes;
-	private _rawAttrs: RawAttributes;
-	public id: string;
+	private _attrs?: Attributes;
+	private _rawAttrs?: RawAttributes;
+	public id?: string;
 	public classNames = [] as string[];
 	/**
 	 * Node Type declaration.
@@ -59,7 +59,7 @@ export default class HTMLElement extends Node {
 	 *
 	 * @memberof HTMLElement
 	 */
-	public constructor(public tagName: string, keyAttrs: KeyAttributes, private rawAttrs = '', public parentNode = null as Node) {
+	public constructor(public tagName: string, keyAttrs: KeyAttributes, private rawAttrs = '', public parentNode: null | Node = null) {
 		super();
 		this.rawAttrs = rawAttrs || '';
 		this.parentNode = parentNode || null;
@@ -180,9 +180,14 @@ export default class HTMLElement extends Node {
 			content = [content];
 		} else if (typeof content == 'string') {
 			const r = parse(content, options);
+			if(!r) return console.trace("R undefined");
 			content = r.childNodes.length ? r.childNodes : [new TextNode(content)];
 		}
-		this.childNodes = content;
+		if(Array.isArray(content)) {
+			this.childNodes = content;
+		} else {
+			this.childNodes = [content as Node];
+		}
 	}
 
 	public get outerHTML() {
@@ -428,7 +433,7 @@ export default class HTMLElement extends Node {
 		const attrs = {} as RawAttributes;
 		if (this.rawAttrs) {
 			const re = /\b([a-z][a-z0-9\-]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|(\S+)))?/ig;
-			let match: RegExpExecArray;
+			let match: RegExpExecArray | null;
 			while (match = re.exec(this.rawAttrs)) {
 				attrs[match[1]] = match[2] || match[3] || match[4] || null;
 			}
@@ -545,7 +550,7 @@ export default class HTMLElement extends Node {
 // https://html.spec.whatwg.org/multipage/custom-elements.html#valid-custom-element-name
 const kMarkupPattern = /<!--[^]*?(?=-->)-->|<(\/?)([a-z][-.:0-9_a-z]*)\s*([^>]*?)(\/?)>/ig;
 const kAttributePattern = /(^|\s)(id|class)\s*=\s*("([^"]+)"|'([^']+)'|(\S+))/ig;
-const kSelfClosingElements = {
+const kSelfClosingElements: { [key: string]: boolean } = {
 	area: true,
 	base: true,
 	br: true,
@@ -557,7 +562,7 @@ const kSelfClosingElements = {
 	meta: true,
 	source: true
 };
-const kElementsClosedByOpening = {
+const kElementsClosedByOpening: { [key: string]: any } = {
 	li: { li: true },
 	p: { p: true, div: true },
 	b: { div: true },
@@ -570,7 +575,7 @@ const kElementsClosedByOpening = {
 	h5: { h5: true },
 	h6: { h6: true }
 };
-const kElementsClosedByClosing = {
+const kElementsClosedByClosing: { [key: string]: any } = {
 	li: { ul: true, ol: true },
 	a: { div: true },
 	b: { div: true },
@@ -579,7 +584,7 @@ const kElementsClosedByClosing = {
 	td: { tr: true, table: true },
 	th: { tr: true, table: true }
 };
-const kBlockTextElements = {
+const kBlockTextElements: { [key: string]: boolean } = {
 	script: true,
 	noscript: true,
 	style: true,
@@ -603,12 +608,12 @@ const frameflag = 'documentfragmentcontainer';
  * @param  {string} data      html
  * @return {HTMLElement}      root element
  */
-export function parse(data: string, options = {} as Options) {
-	const root = new HTMLElement(null, {});
+export function parse(data: string, options: any = {} as Options) {
+	const root = new HTMLElement("", {});
 	let currentParent = root;
 	const stack = [root];
 	let lastTextPos = -1;
-	let match: RegExpExecArray;
+	let match: RegExpExecArray | any;
 	// https://github.com/taoqf/node-html-parser/issues/38
 	data = `<${frameflag}>${data}</${frameflag}>`;
 	while (match = kMarkupPattern.exec(data)) {
@@ -637,7 +642,7 @@ export function parse(data: string, options = {} as Options) {
 		}
 		if (!match[1]) {
 			// not </ tags
-			const attrs = {};
+			const attrs: { [key: string]: any } = {};
 			for (let attMatch; attMatch = kAttributePattern.exec(match[3]);) {
 				attrs[attMatch[2]] = attMatch[4] || attMatch[5] || attMatch[6];
 			}
@@ -714,19 +719,20 @@ export function parse(data: string, options = {} as Options) {
 		while (stack.length > 1) {
 			// Handle each error elements.
 			const last = stack.pop();
+			if(!last) return;
 			const oneBefore = arr_back(stack);
 			if (last.parentNode && (last.parentNode as HTMLElement).parentNode) {
 				if (last.parentNode === oneBefore && last.tagName === oneBefore.tagName) {
 					// Pair error case <h3> <h3> handle : Fixes to <h3> </h3>
 					oneBefore.removeChild(last);
-					last.childNodes.forEach((child) => {
+					last.childNodes.forEach((child: any) => {
 						(oneBefore.parentNode as HTMLElement).appendChild(child);
 					});
 					stack.pop();
 				} else {
 					// Single error  <div> <h3> </div> handle: Just removes <h3>
 					oneBefore.removeChild(last);
-					last.childNodes.forEach((child) => {
+					last.childNodes.forEach((child: any) => {
 						oneBefore.appendChild(child);
 					});
 				}
@@ -734,7 +740,7 @@ export function parse(data: string, options = {} as Options) {
 				// If it's final element just skip.
 			}
 		}
-		response.childNodes.forEach((node) => {
+		response.childNodes.forEach((node: any) => {
 			if (node instanceof HTMLElement) {
 				node.parentNode = null;
 			}
